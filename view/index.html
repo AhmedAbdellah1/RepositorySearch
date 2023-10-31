@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <title>Github Repositories</title>
+  </head>
+
+  <body>
+    <div class="container mt-5">
+      <h2 class="text-center">GitHub Repository Search</h2>
+      <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="top">Select Top:</label>
+              <select name="top" class="form-control" id="top">
+                <option value="">---Select Top---</option>
+                <?= $topHtml; ?>
+              </select>
+            </div>
+
+            <div class="form-group col-md-4">
+              <label for="date">Select Date:</label>
+              <input
+                type="date"
+                name="date"
+                id="date"
+                placeholder="---Write Date---"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group col-md-4">
+              <label for="language">Select Language:</label>
+              <select name="language" class="form-control" id="language">
+                <option value="">---Select Language---</option>
+                <?= $languesHtml; ?>
+              </select>
+            </div>
+          </div>
+
+          <button id="search-button" class="btn btn-primary mt-3">
+            Search
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mt-5">
+      <h3 class="text-center">Search Results</h3>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>SN</th>
+            <th>ID</th>
+            <th>Language</th>
+            <th>Star Count</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="repositories">
+          <?php include('../templates/repositories.php'); ?>
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const searchButton = document.getElementById("search-button");
+        searchButton.addEventListener("click", getRepositories);
+      });
+
+      function getRepositories() {
+        const topValue = document.getElementById("top").value;
+        const dateValue = document.getElementById("date").value;
+        const languageValue = document.getElementById("language").value;
+
+        const url = `../filter.php?top=${topValue}&date=${dateValue}&language=${languageValue}`;
+
+        const myRequest = new XMLHttpRequest();
+
+        myRequest.onreadystatechange = function () {
+          if (myRequest.readyState === 4 && myRequest.status === 200) {
+            const response = JSON.parse(myRequest.responseText);
+            displaySearchResults(response);
+          }
+        };
+
+        myRequest.open("GET", url, true);
+        myRequest.send();
+
+        document.getElementById("top").value = "";
+        document.getElementById("date").value = "";
+        document.getElementById("language").value = "";
+      }
+
+      function displaySearchResults(results) {
+        const repositoriesTable = document.getElementById("repositories");
+
+        repositoriesTable.innerHTML = "";
+
+        if (results.length === 0) {
+          repositoriesTable.innerHTML =
+            '<tr><td colspan="5">No Search Results</td></tr>';
+        } else {
+          results.forEach((result, index) => {
+            const row = repositoriesTable.insertRow();
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${result.id}</td>
+                <td>${result.language}</td>
+                <td>${result.stargazersCount}</td>
+                <td>${formatDate(result.createdAt)}</td>
+              `;
+          });
+        }
+      }
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+    </script>
+  </body>
+</html>
